@@ -20,20 +20,22 @@ clock = pygame.time.Clock()
 pixAr = pygame.PixelArray(gameDisplay)
 pixAr[10][20] = green
 
-class Boid(bird):
+pygame.draw.polygon(gameDisplay,green,((posX,posY),(posX,posY+30),(posX+20,posY+25)))
+
+class Boid:
     flock = []
 
     def __init__(self):
         bird.__init__(self)
         self.up
         self.setheading(random.randrange(360))
-        self.setpos(random.randrange(-100,200),random.randrange(-100,200))
+        posX = random.randrange(-100,200)
+        posY = random.randrange(-100,200)
+        self.setpos(posX,posY)
         self.down()
         self.newHead = None
         Boid.flock.append(self)
-
-pygame.draw.line(gameDisplay,black,(100,200),(100,700),2)
-pygame.draw.polygon(gameDisplay,green,((10,20),(10,50),(30,25)))
+        pygame.draw.polygon(gameDisplay,green,((posX,posY),(posX,posY+30),(posX+20,posY+25)))
 
 
 while True:
