@@ -22,21 +22,34 @@ pixAr[10][20] = green
 
 pygame.draw.polygon(gameDisplay,green,((posX,posY),(posX,posY+30),(posX+20,posY+25)))
 
-class Boid:
+class Boid(Bird):
     flock = []
 
     def __init__(self):
-        bird.__init__(self)
-        self.up
+        Bird.__init__(self)
         self.setheading(random.randrange(360))
         posX = random.randrange(-100,200)
         posY = random.randrange(-100,200)
         self.setpos(posX,posY)
         self.down()
         self.newHead = None
-        Boid.flock.append(self)
         pygame.draw.polygon(gameDisplay,green,((posX,posY),(posX,posY+30),(posX+20,posY+25)))
+        Boid.flock.append(self)
 
+
+    def start(self):
+        self.boid_init()
+        self.setheading()
+        if self.gui: self.render()
+        return self.generate_observations()
+
+    def moveToFlock():
+        if(posX != targetX):
+            posX+=5
+        if(posY != targetY):
+            posY+=5
+
+    def rotateBoid():
 
 while True:
     for event in pygame.event.get():
