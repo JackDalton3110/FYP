@@ -10,10 +10,13 @@ black = (0,0,0)
 red = (255,0,0)
 green = (0,255,0)
 blue = (0,0,255)
-flockSize = 10
+flockSize = 3
 
-display_Width = 800
-display_Height = 600
+display_Width = 1000
+display_Height = 900
+
+posX = float(random.randrange(display_Width))
+posY = float(random.randrange(display_Height))
 
 gameDisplay = pygame.display.set_mode((display_Width,display_Height))
 pygame.display.set_caption("flocking algorithm")
@@ -26,9 +29,7 @@ class Bird:
     flock = []
 
     def __init__(self, gui = False):
-        self.posX = random.randrange(display_Width)
-        self.posY = random.randrange(display_Height)
-        self.location = [self.posX, self.posY]
+        self.location = [posX, posY]
         self.seperation = 0.0
         self.alignment = 0.0
         self.cohesion = 0.0
@@ -44,34 +45,27 @@ class Bird:
         Bird.flock.append(self)
 
     def start(self):
-        pass
-        self.setHeading()
         return self.generate_observations()
 
-    def dist(self):
-        pass
-        ##for other in range(len(Bird.flock)):
-
-
     def moveBird(self):
-        for i in range (len(Bird.flock)):
-            self.posX += self.forceX
-            self.posY += self.forceY
-            self.location = [self.posX, self.posY]
-            gameDisplay.blit(self.img, (self.posX,self.posY))
+        self.location[0] += self.forceX
+        self.location[1] += self.forceY
+        self.location = [self.location[0], self.location[1]]
+        self.leader = False
+        gameDisplay.blit(self.img, (self.location[0],self.location[1]))
 
-            if(self.posX > display_Width):
-                self.posX = 0
-            elif(self.posX < 0):
-                self.posX = display_Width
+        if(self.location[0] > display_Width):
+            self.location[0] = 0
+        elif(self.location[0] < 0):
+            self.location[0] = display_Width
 
-            if(self.posY<0):
-                self.posY = display_Height
-            elif(self.posY>display_Height):
-                self.posY = 0
+        if(self.location[1]<0):
+            self.location[1] = display_Height
+        elif(self.location[1]>display_Height):
+            self.location[1] = 0
 
     def ApplyForce(self, force=[]):
-        self.acceleration+=force
+        self.acceleration = [self.acceleration[0]+force[0], self.acceleration[1]+force[1]]
 
     def calcSeperation(self):
         sepDist = 20.0
@@ -79,14 +73,11 @@ class Bird:
         distance = 0.0
         count = 0
 
-        for i in Bird.flock:
-            location = [self.posX, self.posY]
-
         for other in Bird.flock:
             if self != other:
-                distance = sqrt(((self.posX-other.posX)**2)+((self.posY - other.posY)**2))##distance between
+                distance = sqrt(((self.location[0]-other.location[0])**2)+((self.location[1] - other.location[1])**2))##distance between
             if distance > 0.0 and distance < sepDist:
-                diff = [self.location[0] - other.location[0], self.location[1] - other.location[1]]##subTwoLists
+                diff = [float(self.location[0] - other.location[0]), float(self.location[1] - other.location[1])]##subTwoLists
                 mag = sqrt(diff[0]**2 + diff[1]**2)##magnitude
                 if mag > 0:
                     diff[0]/=mag##normalize
@@ -96,7 +87,10 @@ class Bird:
                     diff[1] = diff[1]
                 diff[0]/=distance##divScalar
                 diff[1]/=distance
-                steer = [self.posX+diff[0], self.posY+diff[1]]##addVector
+                self.location[0]+=diff[0]
+                self.location[1]+=diff[1]
+                steer = [self.location[0], self.location[1]]
+                ##steer = [self.location[0]+diff[0], self.location+diff[1]]##addVector
                 count+=1##increment count
         if count > 0:
             steer[0]/= count
@@ -104,16 +98,14 @@ class Bird:
         steerMag = sqrt(steer[0]**2 + steer[1]**2)##magnitude
         if steerMag > 0:
             if steerMag > 0:
-                steer[0]/=steerMag##divScalar
-                steer[1]/=steerMag
+                steer = [steer[0]/steerMag, steer[1]/steerMag]##normalize
             else:
-                steer[0] = diff[0]
-                steer[1] = diff[1]
+                steer = [steer[0],steer[1]]
+                
             steer = [steer[0]*self.maxSpeed, steer[1]*self.maxSpeed]##mulScalar
-            steer = [steer[0]-self.forceX, steer[1] - self.forceY]
+            steer = [steer[0]-self.velocity[0], steer[1] - self.velocity[1]]
             if steerMag > self.maxForce:##limit
-               self.posX = floor(self.posX / steerMag)
-               self.posY = floor(self.posY / steerMag)
+               steer = [steer[0]/steerMag, steer[1]/steerMag]
         return steer
 
     def calcAlignment(self):
@@ -121,33 +113,34 @@ class Bird:
         m_sum = [0.0,0.0]
         distance = 0.0
         count = 0
+        steer = [0,0]
+
         for other in Bird.flock:
             if self != other:
-                distance = sqrt(((self.posX-other.posX)**2)+((self.posY - other.posY)**2))
+                distance = sqrt(((self.location[0]-other.location[1])**2)+((self.location[1] - other.location[1])**2))
             if distance > 0 and distance < neighborDist:
                 m_sum[0]+=self.velocity[0]
                 m_sum[1]+=self.velocity[1]
                 count+=1
-            if count > 0:
-                m_sum[0]/=count
-                m_sum[1]/= count
-                mag = sqrt(m_sum[0]**2 + m_sum[1]**2)##magnitude
-                if mag > 0:
-                    m_sum[0]/=mag##normalize
-                    m_sum[1]/=mag
-                else:
-                    m_sum[0] = self.posX
-                    m_sum[1] = self.posY
-                m_sum = [m_sum[0]*self.maxForce, m_sum[1]*self.maxForce]
-                steer[0,0]
-                steer = [m_sum[0]- self.velocity[0], m_sum[1] - self.velocity[1]]
-                steerMag = sqrt(steer[0]**2 + steer[1]**2)##magnitude
-                if steerMag > self.maxForce:##limit
-                    steer = [steer[0]/self.maxForce, steer[1]/self.maxForce]
-                return steer
+        if count > 0:
+            m_sum[0]/=count
+            m_sum[1]/= count
+            mag = sqrt(m_sum[0]**2 + m_sum[1]**2)##magnitude
+            if mag > 0:
+                m_sum[0]/=mag##normalize
+                m_sum[1]/=mag
             else:
-                temp = [0,0]
-                return temp
+                m_sum[0] = self.location[0]
+                m_sum[1] = self.location[1]
+            m_sum = [m_sum[0]*self.maxForce, m_sum[1]*self.maxForce]
+            steer = [m_sum[0] - self.velocity[0], m_sum[1] - self.velocity[1]]
+            steerMag = sqrt(steer[0]**2 + steer[1]**2)##magnitude
+            if steerMag > self.maxForce:##limit
+                steer = [steer[0]/steerMag, steer[1]/steerMag]
+            return steer
+        else:
+            temp = [0.0,0.0]
+            return temp
 
     def calcCohesion(self):
         neighborDist = 50.0
@@ -157,12 +150,14 @@ class Bird:
 
         for other in Bird.flock:
             if self != other:
-                distance = sqrt(((self.posX-other.posX)**2)+((self.posY - other.posY)**2))
+                distance = sqrt(((self.location[0]-other.location[0])**2)+((self.location[1] - other.location[1])**2))
             if distance > 0 and distance < neighborDist:
-                m_sum = [self.posX + other.posX, self.posY+other.posY]
+                m_sum = [self.location[0] + other.location[0], self.location[1]+other.location[1]]
                 count+=1
-        if count > 0:
-            m_sum = [m_sum[0]/count , m_sum[1]/count]
+            #elif self.leader == False and distance > neighborDist:
+                #self.velocity = [self.location[0]-1, self.location[1]-1]
+        if count < 0:
+            m_sum = [m_sum[0] / count , m_sum[1] / count]
             return Bird.seek(self, m_sum)
         else:
             temp = [0.0,0.0]
@@ -170,7 +165,8 @@ class Bird:
 
     def seek(self, m_sum, *args):
         desired = [0.0,0.0]
-        desired = self.location
+        if self.leader == True:
+            desired = self.location
         desired = [desired[0] - m_sum[0], desired[1] - m_sum[1]]
         desiredMag = sqrt(desired[0]**2 + desired[1]**2)
         if desiredMag > 0:
@@ -188,30 +184,43 @@ class Bird:
         return self.acceleration
 
     def update(self):
-        self.acceleration = [self.acceleration[0]*.4, self.acceleration[1]*.4]
-        self.velocity = [self.velocity[0]+self.acceleration[0], self.velocity[1]+self.acceleration[1]]
-        velMag = sqrt(self.velocity[0]**2 + self.velocity[1]**2)
-        if velMag > self.maxForce:
-            self.velocity = [self.velocity[0]/self.maxForce, self.velocity[1]/self.maxForce]
+        self.acceleration = [self.acceleration[0]*.4, self.acceleration[1]*.4]##mulScalar
+        self.velocity = [self.velocity[0]+self.acceleration[0], self.velocity[1]+self.acceleration[1]]##addVector
+        velMag = sqrt(self.velocity[0]**2 + self.velocity[1]**2)##magnitude
+        if velMag > self.maxSpeed:##limit
+            self.velocity = [self.location[0] / velMag, self.location[1] / velMag]
         self.location = [self.location[0] + self.velocity[0], self.location[1] + self.velocity[1]]
         self.acceleration=[self.acceleration[0] * 0, self.acceleration[1]*0]
         Bird.render(self)
+        Bird.borders(self)
+        Bird.flock[0].leader = True
+
+    def borders(self):
+        if(self.location[0] > display_Width):
+            self.location[0] = 0
+        elif(self.location[0] < 0):
+            self.location[0] = display_Width
+
+        if(self.location[1] < 0):
+            self.location[1] = display_Height
+        elif(self.location[1] > display_Height):
+            self.location[1] = 0
 
     def Flocking(self):
-        sep = Bird.calcSeperation(self)
-        ali = Bird.calcAlignment(self)
-        coh = Bird.calcCohesion(self)
+        self.seperation = Bird.calcSeperation(self)
+        self.alignment = Bird.calcAlignment(self)
+        self.cohesion = Bird.calcCohesion(self)
 
-        sep = [sep[0]*1.5, sep[1]*1.5]
-        ali = [ali[0]*1 ,ali[1]*1 ]
-        coh = [coh[0]*1,coh[1]*1]
+        self.seperation = [self.seperation[0]*1.5, self.seperation[1]*1.5]
+        self.alignment = [self.alignment[0]*1 ,self.alignment[1]*1 ]
+        self.cohesion = [self.cohesion[0]*1,self.cohesion[1]*1]
 
-        self.ApplyForce(sep)
-        self.ApplyForce(ali)
-        self.ApplyForce(coh)
+        self.ApplyForce(self.seperation)
+        self.ApplyForce(self.seperation)
+        self.ApplyForce(self.cohesion)
 
     def render(self):
-        gameDisplay.blit(self.img, (self.posX,self.posY))
+        gameDisplay.blit(self.img, (self.location[0],self.location[1]))
 
     def generate_observations(self):
         return self.alignment, self.cohesion, self.seperation
@@ -221,28 +230,32 @@ class Bird:
 
 ##game loop 
 def main():
-    flocking = False
+    flocking = True
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()##close window
                 quit()
             if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_SPACE:
-                    for i in range(len(Bird.flock)):
-                        Bird.Flocking(Bird.flock[i])
-                        if i >= 9:
-                            i = 0
+                if event.key == pygame.K_SPACE and flocking == True:
+                    flocking = False
+                else:
                     flocking = True
 
+        gameDisplay.fill(blue)
         if len(Bird.flock) < flockSize:
                 Bird()
         else:
              for i in range(len(Bird.flock)):
                 if flocking == False:
                     Bird.moveBird(Bird.flock[i])
-                Bird.update(Bird.flock[i])
-        gameDisplay.fill(blue)
+                elif flocking == True:
+                    for i in range(len(Bird.flock)):
+                        Bird.Flocking(Bird.flock[i])
+                        Bird.update(Bird.flock[i])
+                        if i >= 2:
+                            i = 0
+            
         
         pygame.display.update()
         clock.tick(60)
