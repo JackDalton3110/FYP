@@ -10,7 +10,7 @@ black = (0,0,0)
 red = (255,0,0)
 green = (0,255,0)
 blue = (0,0,255)
-flockSize = 10
+flockSize = 15
 
 display_Width = 1300
 display_Height = 900
@@ -37,8 +37,8 @@ class Bird:
         self.forceY = random.randrange(-1.0, 2.0)
         self.acceleration = [0.0 , 0.0]
         self.velocity = [self.forceX, self.forceY]
-        self.maxSpeed = 0.5 ## max speed
-        self.maxForce = 0.25 ## steering force
+        self.maxSpeed = 2.0 ## max speed
+        self.maxForce = 0.5 ## steering force
         self.img = pygame.image.load('C:/Users/gameuser/Desktop/FYP/Flocking/images/flockArrow.png')
         Bird.flock.append(self)
 
@@ -90,7 +90,6 @@ class Bird:
                 self.location[0]+=diff[0]
                 self.location[1]+=diff[1]
                 steer = [self.location[0], self.location[1]]
-                ##steer = [self.location[0]+diff[0], self.location+diff[1]]##addVector
                 count+=1##increment count
         if count > 0:
             steer[0]/= count
