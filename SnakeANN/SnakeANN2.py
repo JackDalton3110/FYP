@@ -109,9 +109,9 @@ class SnakeNN:
         return model
 
     def train_model(self, training_data, model):
-        X = np.array([i[0] for i in training_data]).reshape(-1, 5, 1)
-        y = np.array([i[1] for i in training_data]).reshape(-1, 1)
-        model.fit(X,y, n_epoch = 3, shuffle = True, run_id = self.filename)
+        X = np.array([i[0] for i in training_data]).reshape(-1, 5, 1)##input
+        y = np.array([i[1] for i in training_data]).reshape(-1, 1)##output
+        model.fit(X,y, n_epoch = 3, shuffle = True, run_id = self.filename)##feeds information to network
         model.save(self.filename)
         return model
 
@@ -183,5 +183,5 @@ class SnakeNN:
         self.test_model(nn_model)
 
 if __name__ == "__main__":
-   # SnakeNN().train()
-    SnakeNN().visualise()
+   SnakeNN().train()
+   # SnakeNN().visualise()

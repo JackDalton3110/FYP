@@ -158,7 +158,6 @@ class Bird:
             return temp
 
     def seek(self, m_sum, *args):
-        desired = [0.0,0.0]
         desired = self.location
         desired = [desired[0] - m_sum[0], desired[1] - m_sum[1]]
         desiredMag = sqrt(desired[0]**2 + desired[1]**2)
@@ -245,6 +244,7 @@ def main():
                         Bird.Flocking(Bird.flock[i], Bird.flock)
                         Bird.update(Bird.flock[i])
                         Bird.borders(Bird.flock[i])
+
                         if i >= 9:
                             i = 0
         pygame.display.update()

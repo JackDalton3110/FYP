@@ -1,25 +1,16 @@
 from flockAlgorithm import Bird
 
+import tensorflow as tf
 import keras
-from keras import backend
-from keras.models import Sequential
-from keras.layers import Activation
-from keras.layers.core import Dense
+import tflearn
 from tflearn.layers.core import input_data, fully_connected
-from tflearn.layers.estimator import regression
-from statistics import mean
-from collections import Counter
-from keras.optimizers import Adam
-from tensorflow.keras import layers
-
 import numpy as np
 
 from random import randint
-
+from statistics import mean
 from collections import Counter
 import pickle
 
-tf.enable_eager_execution()
 
 class flockNN:
     def __init__ (self, initial_games = 10000, test_games = 1000, goal_steps = 2000, lr = 1e-2, filename = 'flock_nn.tflearn'):
@@ -35,22 +26,24 @@ class flockNN:
             [[0, -1], 3]
             ]
 
-    def initial_population(self):
-        training_data = []
-        for _ in range(self.initial_games):
-            game = Bird()
-            _, prev_score, Bird, flock = game.main()
-            prev_observation = self.generate_observation(Bird, flock)
-            prev_flock_distance = self.generate_flock_distance(Bird, flock)
-            for i in range(self.goal_steps):
-                action, game_action = self.generate_action(Bird)
+        def generate_action(self, Bird):
+            action = randint(0,2)-1
+            return action, self.get_game_action(Bird, action)
 
+        def get_game_action(self, Bird, action):
+            if action == -1:
+                new_direction = self.turn_vector_to_the_left(Bird_direction)
+            elif action == 1:
+                new_direction = self.turn_vector_to_the_right(Bird_direction)
+            for pair in self.vectors_and_keys:
+                if pair[0] == new_direction.tolist():
+                    game_action = pair[1]
+            return game_action
 
     def model(self):
-        network = input_data(shape[None,5,1], name='input')
-        network = fully_connected(network,25,ativation='relu')
+        network = input_data(shape=[None,12,1], name='input')
+        network = fully_connected(network,144,ativation='relu')
         network = fully_connected(network, 2,ativation='linear')
-        netowrk = regression(network, optimizer='adam', learning_rate=self.lr, loss='mean_square', name='target')
         model = tflearn.DNN(network, tensorboard_dir='log')
         return model
 
@@ -67,10 +60,23 @@ class flockNN:
             if done:
                 break
             else:
-                prev_observation = self.generate_observation(bird, velocity)
+                prev_observation = self.generate_observation(Bird, velocity)
 
     def train_model(self, training_data, model):
-        pass
+        X = np.array([i[0] for i in training_data]).reshape(-1,10,1)#input
+        Y = np.array([i[1] for i in training_data]).reshape(-1,1)#output
+        model.fit(X, Y, n_epoch = 100, shuffle=True, run_id = self.filename)##input data fed to train
+        model.save(self.filename)
+        return model
+
+    def test_model(self, model):
+        steps_arr = []
+        scores_arr = []
+        for i in range(self.test_games):
+            steps = 0
+            game_memory = []
+            game = Bird()
+            i, 
 
     def train(self):
         training_data = self.initial_population()
