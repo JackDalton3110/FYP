@@ -1,5 +1,6 @@
 import random
 from math import sqrt, floor, atan2, pi, cos, sin
+import pickle
 import pygame
 pygame.init()
 
@@ -12,11 +13,11 @@ green = (0,255,0)
 blue = (0,0,255)
 flockSize = 15
 
+nearestRotation = [0.0, 0.0 ,0.0 ,0.0 ,0.0 ,0.0]
+outputRotation = 0.0
+
 display_Width = 900
 display_Height = 900
-
-posX = float(random.randrange(display_Width))
-posY = float(random.randrange(display_Height))
 
 gameDisplay = pygame.display.set_mode((display_Width,display_Height))
 pygame.display.set_caption("flocking algorithm")
@@ -44,7 +45,7 @@ class Bird:
         self.velocity = [self.forceX, self.forceY]
         self.maxSpeed = 2.0 ## max speed
         self.maxForce = 0.5 ## steering force
-        self.img = pygame.image.load('C:/Users/gameuser/Desktop/FYP/Flocking/images/flockArrow.png')
+        self.img = pygame.image.load('./Flocking/images/flockArrow.png')
         Bird.flock.append(self)
 
     def start(self):
@@ -175,6 +176,16 @@ class Bird:
             distance = sqrt(((self.location[0]-flockList[i].location[0])**2)+((self.location[1] - flockList[i].location[1])**2))
             if(distance <= closeEnough):
                 self.heading = flockList[i].heading
+                nearestRotation[0] = self.rotation
+                for j in range(len(nearestRotation[1:])):
+                    if(sqrt(((self.location[0]-flockList[j].location[0])**2)+((self.location[1] - flockList[j].location[1])**2)) < closeEnough):
+                        nearestRotation[j] = flockList[j].rotation
+                    else:
+                        nearestRotation[i] = 0.0
+            else:
+                self.heading = self.heading
+
+        outputRotation = self.rotation
 
 
     def seek(self, m_sum, *args):
@@ -234,8 +245,13 @@ class Bird:
     def generate_observations(self):
         return self.alignment, self.cohesion, self.seperation
 
-    def setHeading(self):
-        pass
+def writeToFile(output, input=[]):
+    testData = {'inputs':input,
+                'output':output}
+
+    filename = 'testData.txt'
+    file = open(filename, 'wb')
+    pickle.dump(testData, file)
 
 ##game loop 
 def main():
@@ -264,7 +280,7 @@ def main():
                         Bird.borders(Bird.flock[i])
                         Bird.calcHeading(Bird.flock[i], Bird.flock)
                         Bird.update(Bird.flock[i])
-
+                        writeToFile( outputRotation,nearestRotation)
                         if i >= len(Bird.flock):
                             i = 0
         
