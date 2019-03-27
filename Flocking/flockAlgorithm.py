@@ -11,18 +11,19 @@ black = (0,0,0)
 red = (255,0,0)
 green = (0,255,0)
 blue = (0,0,255)
-flockSize = 15
+flockSize = 20
 
-nearestRotation = [0.0, 0.0 ,0.0 ,0.0 ,0.0 ,0.0]
-outputRotation = 0.0
+nearestRotation = [0.0, 0.0 ,0.0 ,0.0]
 
-display_Width = 900
-display_Height = 900
+display_Width = 700
+display_Height = 700
 
 gameDisplay = pygame.display.set_mode((display_Width,display_Height))
 pygame.display.set_caption("flocking algorithm")
 gameDisplay.fill(black)
 clock = pygame.time.Clock()
+
+
 
 ##Flock members
 class Bird:
@@ -38,14 +39,13 @@ class Bird:
         self.cohesion = 0.0 
         self.rotation = float(random.randrange(360))
         self.heading = [0.0, 0.0]
-        self.speed = [0.25, 0.25]
-        self.forceX = random.randrange(2.0)
-        self.forceY = random.randrange(2.0)
+        self.speed = [0.75, 0.75]
         self.acceleration = [0.0 , 0.0]
-        self.velocity = [self.forceX, self.forceY]
+        self.velocity = [0.0, 0.0]
         self.maxSpeed = 2.0 ## max speed
         self.maxForce = 0.5 ## steering force
         self.img = pygame.image.load('./Flocking/images/flockArrow.png')
+        self.outputRotation = 0.0
         Bird.flock.append(self)
 
     def start(self):
@@ -75,7 +75,7 @@ class Bird:
         self.acceleration = [self.acceleration[0]+force[0], self.acceleration[1]+force[1]]
 
     def calcSeperation(self, flockList):
-        sepDist = 10.0
+        sepDist = 20.0
         steer = [0.0,0.0]
         distance = 0.0
         count = 0
@@ -115,7 +115,7 @@ class Bird:
         return steer
 
     def calcAlignment(self, flockList):
-        neighborDist = 20.0
+        neighborDist = 30.0
         m_sum = [0.0,0.0]
         distance = 0.0
         count = 0
@@ -148,7 +148,7 @@ class Bird:
             return temp
 
     def calcCohesion(self, flockList):
-        neighborDist = 20.0
+        neighborDist = 30.0
         m_sum = [0.0,0.0]
         distance = 0.0
         count =0
@@ -166,27 +166,7 @@ class Bird:
             temp = [0.0,0.0]
             return temp
 
-    def calcHeading(self, flockList):
-        closeEnough = 20
-        for i in range(len(flockList)):
-            #flockList[i].rotation = atan2(flockList[i].velocity[0], -flockList[i].velocity[1])*180 /pi
-            #flockList[i].rotation = abs(flockList[i].rotation)
-            flockList[i].heading[0] = cos(flockList[i].rotation * (3.14/180))
-            flockList[i].heading[1] = sin(flockList[i].rotation * (3.14/180))
-            distance = sqrt(((self.location[0]-flockList[i].location[0])**2)+((self.location[1] - flockList[i].location[1])**2))
-            if(distance <= closeEnough):
-                self.heading = flockList[i].heading
-                nearestRotation[0] = self.rotation
-                for j in range(len(nearestRotation[1:])):
-                    if(sqrt(((self.location[0]-flockList[j].location[0])**2)+((self.location[1] - flockList[j].location[1])**2)) < closeEnough):
-                        nearestRotation[j] = flockList[j].rotation
-                    else:
-                        nearestRotation[i] = 0.0
-            else:
-                self.heading = self.heading
-
-        outputRotation = self.rotation
-
+    
 
     def seek(self, m_sum, *args):
         desired = self.location
@@ -205,13 +185,40 @@ class Bird:
             self.acceleration = [self.acceleration[0]/self.maxForce, self.acceleration[1]/self.maxForce]
         return self.acceleration
 
+    def calcHeading(self, flockList):
+        closeEnough = 30
+        extendedDist = 100
+        nearestRotation[0] = self.rotation
+        j=1
+        
+        #self.heading[0] = cos(self.rotation * (3.14/180))
+        #self.heading[1] = sin(self.rotation * (3.14/180))
+
+        for i in range(len(flockList)):
+            distance = sqrt(((self.location[0]-flockList[i].location[0])**2)+((self.location[1] - flockList[i].location[1])**2))
+            
+            if(j == 4):
+                break
+
+            if(distance <= closeEnough and distance != 0):
+                nearestRotation[j]= flockList[i].rotation
+                j+=1
+            elif(distance <= extendedDist and distance != 0):
+                nearestRotation[j] = flockList[i].rotation
+                j+=1
+            else:
+                nearestRotation[j] = self.rotation
+                j+=1
+        
+        self.rotation = sum(nearestRotation)/len(nearestRotation)
+        self.heading[0] = cos(self.rotation * (3.14/180))
+        self.heading[1] = sin(self.rotation * (3.14/180))
+
+        self.outputRotation = self.rotation
+
     def update(self):
         self.velocity = [self.heading[0] * self.speed[0], self.heading[1] * self.speed[1]]##addVector
-        velMag = sqrt(self.velocity[0]**2 + self.velocity[1]**2)##magnitude
-        if velMag > self.maxSpeed:##limit
-            self.velocity = [self.velocity[0] / velMag, self.velocity[1] / velMag]
         self.location = [self.location[0] + self.velocity[0], self.location[1] + self.velocity[1]]
-        self.acceleration=[self.acceleration[0] * 0, self.acceleration[1]*0]
         Bird.render(self)
 
 
@@ -227,6 +234,7 @@ class Bird:
             self.location[1] = 0
 
     def Flocking(self, flockList):
+
         sep = Bird.calcSeperation(self, flockList)
         align = Bird.calcAlignment(self, flockList)
         coh = Bird.calcCohesion(self, flockList)
@@ -280,7 +288,7 @@ def main():
                         Bird.borders(Bird.flock[i])
                         Bird.calcHeading(Bird.flock[i], Bird.flock)
                         Bird.update(Bird.flock[i])
-                        writeToFile( outputRotation,nearestRotation)
+                        writeToFile(Bird.flock[i].outputRotation,nearestRotation)
                         if i >= len(Bird.flock):
                             i = 0
         

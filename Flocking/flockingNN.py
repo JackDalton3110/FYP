@@ -49,7 +49,7 @@ class flockNN:
 
     def visualise_game(self, model):
         game = flockAlgorithm()
-        prev_observation = self.generate_observation(distance, postion)
+        prev_observation = self.generate_observation(distance, position)
         for i in range(self.goal_steps):
             predictions = []
             for action in range(-1, 2):
