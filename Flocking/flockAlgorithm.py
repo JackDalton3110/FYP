@@ -11,7 +11,7 @@ black = (0,0,0)
 red = (255,0,0)
 green = (0,255,0)
 blue = (0,0,255)
-flockSize = 20
+flockSize = 10
 
 nearestRotation = [0.0, 0.0 ,0.0 ,0.0]
 
@@ -41,6 +41,8 @@ class Bird:
         self.heading = [0.0, 0.0]
         self.speed = [0.75, 0.75]
         self.acceleration = [0.0 , 0.0]
+        self.forceX = 0.0
+        self.forceY = 0.0
         self.velocity = [0.0, 0.0]
         self.maxSpeed = 2.0 ## max speed
         self.maxForce = 0.5 ## steering force
@@ -52,7 +54,7 @@ class Bird:
         return self.generate_observations()
 
     def moveBird(self):
-        if self.forceX and self.forceY:
+        if self.forceX == 0.0 and self.forceY == 0.0:
             self.forceX = random.randrange(2.0)
             self.forceY = random.randrange(2.0)
             self.velocity = [self.forceX, self.forceY]
@@ -60,22 +62,12 @@ class Bird:
         self.location[1] += self.forceY
         self.location = [self.location[0], self.location[1]]
         gameDisplay.blit(self.img, (self.location[0],self.location[1]))
-        
-        if(self.location[0] > display_Width):
-            self.location[0] = 0
-        elif(self.location[0] < 0):
-            self.location[0] = display_Width
-
-        if(self.location[1]<0):
-            self.location[1] = display_Height
-        elif(self.location[1]>display_Height):
-            self.location[1] = 0
 
     def ApplyForce(self, force=[]):
         self.acceleration = [self.acceleration[0]+force[0], self.acceleration[1]+force[1]]
 
     def calcSeperation(self, flockList):
-        sepDist = 20.0
+        sepDist = 50.0
         steer = [0.0,0.0]
         distance = 0.0
         count = 0
@@ -115,7 +107,7 @@ class Bird:
         return steer
 
     def calcAlignment(self, flockList):
-        neighborDist = 30.0
+        neighborDist = 10.0
         m_sum = [0.0,0.0]
         distance = 0.0
         count = 0
@@ -148,7 +140,7 @@ class Bird:
             return temp
 
     def calcCohesion(self, flockList):
-        neighborDist = 30.0
+        neighborDist = 20.0
         m_sum = [0.0,0.0]
         distance = 0.0
         count =0
@@ -282,6 +274,7 @@ def main():
              for i in range(len(Bird.flock)):
                 if flocking == False:
                     Bird.moveBird(Bird.flock[i])
+                    Bird.borders(Bird.flock[i])
                 elif flocking == True:
                     for i in range(len(Bird.flock)):
                         Bird.Flocking(Bird.flock[i], Bird.flock)
