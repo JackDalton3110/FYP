@@ -1,6 +1,8 @@
 #from flockAlgorithm import main, Bird
 
 import tensorflow as tf
+from tensorflow import keras
+from tensorflow.keras import layers
 import tflearn
 from tflearn.layers.core import input_data, fully_connected
 import numpy as np
@@ -10,6 +12,7 @@ from statistics import mean
 from collections import Counter
 import pickle
 
+print("tf version = "+tf.__version__)
 
 class flockNN:
     def __init__ (self, initial_games = 10000, test_games = 1000, goal_steps = 2000, lr = 1e-2, filename = 'testData.txt'):
@@ -42,7 +45,7 @@ class flockNN:
     def train_model(self, training_data, model):
         X = np.array([i[0] for i in training_data]).reshape(-1,10,1)#input
         Y = np.array([i[1] for i in training_data]).reshape(-1,1)#output
-        model.fit(X, Y, n_epoch = 100, shuffle=True, run_id = self.filename)##input data fed to train
+        model.fit(X, Y, n_epoch = 10000, shuffle=True, run_id = self.filename)##input data fed to train
         model.save(self.filename)
         return model
 
