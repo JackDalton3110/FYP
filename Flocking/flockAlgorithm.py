@@ -11,19 +11,17 @@ black = (0,0,0)
 red = (255,0,0)
 green = (0,255,0)
 blue = (0,0,255)
-flockSize = 10
+flockSize = 25
 
 nearestRotation = [0.0, 0.0 ,0.0 ,0.0]
 
-display_Width = 700
-display_Height = 700
+display_Width = 1200
+display_Height = 900
 
 gameDisplay = pygame.display.set_mode((display_Width,display_Height))
-pygame.display.set_caption("flocking algorithm")
+pygame.display.set_caption("Flocking Window")
 gameDisplay.fill(black)
 clock = pygame.time.Clock()
-
-
 
 ##Flock members
 class Bird:
@@ -37,7 +35,7 @@ class Bird:
         self.seperation = 0.0
         self.alignment = 0.0
         self.cohesion = 0.0 
-        self.rotation = float(random.randrange(360))
+        self.rotation = float(round(random.randrange(360),2))
         self.heading = [0.0, 0.0]
         self.speed = [0.75, 0.75]
         self.acceleration = [0.0 , 0.0]
@@ -46,9 +44,10 @@ class Bird:
         self.velocity = [0.0, 0.0]
         self.maxSpeed = 2.0 ## max speed
         self.maxForce = 0.5 ## steering force
-        self.img = pygame.image.load('./Flocking/images/flockArrow.png')
+        self.img = pygame.image.load('./Flocking/images/flockImg.png')
         self.outputRotation = 0.0
         Bird.flock.append(self)
+        
 
     def start(self):
         return self.generate_observations()
@@ -62,12 +61,14 @@ class Bird:
         self.location[1] += self.forceY
         self.location = [self.location[0], self.location[1]]
         gameDisplay.blit(self.img, (self.location[0],self.location[1]))
+        self.rotation = float(random.randrange(360))
+        pygame.display.set_caption("Bird Moving Window")
 
     def ApplyForce(self, force=[]):
         self.acceleration = [self.acceleration[0]+force[0], self.acceleration[1]+force[1]]
 
     def calcSeperation(self, flockList):
-        sepDist = 50.0
+        sepDist = 100.0
         steer = [0.0,0.0]
         distance = 0.0
         count = 0
@@ -202,14 +203,14 @@ class Bird:
                 nearestRotation[j] = self.rotation
                 j+=1
         
-        self.rotation = sum(nearestRotation)/len(nearestRotation)
+        self.rotation = round(sum(nearestRotation)/len(nearestRotation),2)
         self.heading[0] = cos(self.rotation * (3.14/180))
         self.heading[1] = sin(self.rotation * (3.14/180))
 
         self.outputRotation = self.rotation
 
     def update(self):
-        self.velocity = [self.heading[0] * self.speed[0], self.heading[1] * self.speed[1]]##addVector
+        self.velocity = [self.heading[0] * self.speed[0], self.heading[1] *self.speed[1]]##addVector
         self.location = [self.location[0] + self.velocity[0], self.location[1] + self.velocity[1]]
         Bird.render(self)
 
@@ -238,6 +239,7 @@ class Bird:
         self.ApplyForce(sep)
         self.ApplyForce(align)
         self.ApplyForce(coh)
+        pygame.display.set_caption("Flocking Window")
 
     def render(self):
         gameDisplay.blit(self.img, (self.location[0],self.location[1]))
@@ -245,13 +247,13 @@ class Bird:
     def generate_observations(self):
         return self.alignment, self.cohesion, self.seperation
 
-def writeToFile(output, input=[]):
-    testData = {'inputs':input,
-                'output':output}
 
+def writeToFile(output, input=[]):
     filename = 'testData.txt'
-    file = open(filename, 'wb')
-    pickle.dump(testData, file)
+    file = open(filename, "a")
+    testData = 'inputs:' +str(input)+ ' output:' +str(output)+'\n'
+    file.write(testData)
+    file.close()
 
 ##game loop 
 def main():
@@ -281,11 +283,10 @@ def main():
                         Bird.borders(Bird.flock[i])
                         Bird.calcHeading(Bird.flock[i], Bird.flock)
                         Bird.update(Bird.flock[i])
-                        writeToFile(Bird.flock[i].outputRotation,nearestRotation)
+                        #writeToFile(Bird.flock[i].outputRotation,nearestRotation)
                         if i >= len(Bird.flock):
                             i = 0
         
         pygame.display.update()
-        clock.tick(60)
         
 main()

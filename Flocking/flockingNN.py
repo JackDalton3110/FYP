@@ -1,7 +1,6 @@
-from flockAlgorithm import main, Bird
+#from flockAlgorithm import main, Bird
 
 import tensorflow as tf
-import keras
 import tflearn
 from tflearn.layers.core import input_data, fully_connected
 import numpy as np
@@ -14,27 +13,19 @@ import pickle
 
 class flockNN:
     def __init__ (self, initial_games = 10000, test_games = 1000, goal_steps = 2000, lr = 1e-2, filename = 'testData.txt'):
-        self.initial_games = initial_games
-        self.test_games = test_games
-        self.goal_steps = goal_steps
         self.lr = lr
         self.filename = filename
-        self.vectors_and_keys = [
-            [[-1, 0], 0],
-            [[0, 1 ], 1],
-            [[1, 0 ], 2],
-            [[0, -1], 3]
-            ]
 
 
     def model(self):
-        network = input_data(shape=[None, 5, 1], name='input')
-        network = fully_connected(network, 6, activation='relu')
+        network = input_data(shape=[None, 4, 1], name='input')
+        network = fully_connected(network, 5, activation='relu')
         network = fully_connected(network, 1, activation='linear')
         model = tflearn.DNN(network, tensorboard_dir='log')
         return model
 
     def visualise_game(self, model):
+        pass
         game = main()
         for i in range(self.goal_steps):
             predictions = []
@@ -58,11 +49,6 @@ class flockNN:
     def test_model(self, model):
         steps_arr = []
         scores_arr = []
-        for i in range(self.test_games):
-            steps = 0
-            game_memory = []
-            game = Bird()
-            i, 
 
     def train(self):
         training_data = self.filename
