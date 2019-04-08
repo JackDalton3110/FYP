@@ -11,12 +11,12 @@ black = (0,0,0)
 red = (255,0,0)
 green = (0,255,0)
 blue = (0,0,255)
-flockSize = 25
+flockSize = 8
 
-nearestRotation = [0.0, 0.0 ,0.0 ,0.0]
+nearestRotation = [0.0, 0.0 ,0.0 ,0.0, 0.0]
 
-display_Width = 1200
-display_Height = 900
+display_Width = 400
+display_Height = 400
 
 gameDisplay = pygame.display.set_mode((display_Width,display_Height))
 pygame.display.set_caption("Flocking Window")
@@ -190,7 +190,7 @@ class Bird:
         for i in range(len(flockList)):
             distance = sqrt(((self.location[0]-flockList[i].location[0])**2)+((self.location[1] - flockList[i].location[1])**2))
             
-            if(j == 4):
+            if(j == 5):
                 break
 
             if(distance <= closeEnough and distance != 0):
@@ -249,10 +249,14 @@ class Bird:
 
 
 def writeToFile(output, input=[]):
-    filename = 'testData.txt'
+    filename = 'Inputs.txt'
     file = open(filename, "a")
-    testData = 'inputs:' +str(input)+ ' output:' +str(output)+'\n'
-    file.write(testData)
+    inputs = str( input)+'\n'
+    file.write(inputs)
+    filename = 'Outputs.txt'
+    file = open(filename, 'a')
+    Outputs = str(output)+'\n'
+    file.write(Outputs)
     file.close()
 
 ##game loop 
@@ -283,7 +287,7 @@ def main():
                         Bird.borders(Bird.flock[i])
                         Bird.calcHeading(Bird.flock[i], Bird.flock)
                         Bird.update(Bird.flock[i])
-                        #writeToFile(Bird.flock[i].outputRotation,nearestRotation)
+                        writeToFile(Bird.flock[i].outputRotation,nearestRotation)
                         if i >= len(Bird.flock):
                             i = 0
         
