@@ -1,2 +1,2 @@
-model_checkpoint_path: "c:\\Users\\gameuser\\Desktop\\FYP\\Inputs.txt"
-all_model_checkpoint_paths: "c:\\Users\\gameuser\\Desktop\\FYP\\Inputs.txt"
+model_checkpoint_path: "c:\\Users\\gameuser\\Desktop\\FYP\\NeuralNet2.tflearn"
+all_model_checkpoint_paths: "c:\\Users\\gameuser\\Desktop\\FYP\\NeuralNet2.tflearn"

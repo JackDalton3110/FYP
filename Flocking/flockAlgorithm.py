@@ -253,6 +253,7 @@ def writeToFile(output, input=[]):
     file = open(filename, "a")
     inputs = str( input)+'\n'
     file.write(inputs)
+    
     filename = 'Outputs.txt'
     file = open(filename, 'a')
     Outputs = str(output)+'\n'

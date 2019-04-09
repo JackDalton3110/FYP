@@ -6,6 +6,7 @@ from tensorflow.keras import layers
 import tflearn
 from tflearn.layers.core import input_data, fully_connected
 from tflearn.layers.estimator import regression
+from tflearn import optimizers
 from tflearn.data_utils import VocabularyProcessor
 import numpy as np
 
@@ -24,8 +25,9 @@ with open('Inputs.txt') as I:
         line[i] = line[i].replace("]", "")
         Input.append(np.fromstring(line[i], dtype=float, sep = ','))
     inputLine = Input[1]
-    print(inputLine[1])
+    print(inputLine[0])
     I.close()
+
 with open('Outputs.txt') as O:
     Outputline = O.readlines()
     for i in range(len(line)):
@@ -34,25 +36,15 @@ with open('Outputs.txt') as O:
     print(Output[1])
     O.close()
 
-max_input_length = 6
-
 
 class flockNN:
-    def __init__ (self, initial_games = 10000, test_games = 1000, goal_steps = 2000, lr = 0.04, filename = "Inputs.txt"):
+    def __init__ (self, lr = 0.0025, filename = "Inputs.txt"):
         self.lr = lr
-        self.Inputs = Input
-        self.Outputs = Output
+        self.train_Inputs = Input
+        self.test_Inputs = Input
+        self.train_Outputs = Output
+        self.train_Outputs = Output
         self.filename = filename
-
-
-    def model(self):
-        network = input_data(shape=[None, 5, 1], name='input')
-        network = fully_connected(network, 200, activation='relu')
-        #network = fully_connected(network, 21, activation='softmax')
-        network = fully_connected(network, 1, activation='linear')
-        network = regression(network, optimizer='adam', learning_rate=self.lr, loss='mean_square', name='target')
-        model = tflearn.DNN(network, tensorboard_dir='log')
-        return model
 
     def visualise_game(self, model):
         pass
@@ -69,25 +61,39 @@ class flockNN:
             else:
                 prev_observation = self.generate_observation(Bird, velocity)
 
+    def model(self):
+        network = input_data(shape=[None, 5, 1], name='input')
+        network = fully_connected(network, 50, activation='relu')
+        network = fully_connected(network, 10, activation='relu', restore='False')
+        network = fully_connected(network, 1, activation='linear')
+        network = regression(network, optimizer='Adam', learning_rate=self.lr, loss='mean_square', name='target')
+        model = tflearn.DNN(network, tensorboard_dir='log')
+        #model.load('./NeuralNet2.tflearn')
+        return model
+
     def train_model(self, training_Inputs, training_Outputs, model):
         X = np.array([i for i in training_Inputs]).reshape(-1,5,1)#input
         print(X)
         Y = np.array([i for i in training_Outputs]).reshape(-1,1)#output
         print(Y)
-        model.fit(X, Y, n_epoch = 1000, shuffle=True, run_id = self.filename)##input data fed to train
-        model.save(self.filename)
+        model.fit(X, Y, n_epoch = 100, shuffle=True, run_id = './NeuralNet2.tflearn')##input data fed to train
+        model.save('./NeuralNet2.tflearn')
         return model
 
-    def test_model(self, model):
-        steps_arr = []
-        scores_arr = []
+    def test_model(self,training_Inputs, training_Outputs, NN_Model):
+        inputs = np.array([i for i in training_Inputs]).reshape(-1,5,1)
+        outputs = np.array([i for i in training_Outputs]).reshape(-1,1)
+        test_acc = NN_Model.evaluate(inputs, outputs)
+        print('Test accuarcy: ', test_acc)
+        prediction = NN_Model.predict(np.array([i for i in training_Inputs]).reshape(-1,5,1))
+        print("Prediciton: %s" % str(prediction[10]))
 
     def train(self):
-        training_Inputs = self.Inputs
-        training_Outputs = self.Outputs
+        training_Inputs = self.train_Inputs
+        training_Outputs = self.train_Outputs
         nn_model = self.model()
         nn_model = self.train_model(training_Inputs, training_Outputs, nn_model)
-        self.test_model(nn_model)
+        self.test_model(training_Inputs, training_Outputs, nn_model)
 
     def visualise(self):
         nn_model = self.model()
@@ -95,8 +101,7 @@ class flockNN:
 
     def test(self):
         nn_model = self.model()
-        self.test_model(nn_model)
+        self.test_model(self.test_Inputs, self.test_Inputs, nn_model)
 
-#if __name__ == "__main__":
 flockNN().train()
     #flockNN().visualise()
