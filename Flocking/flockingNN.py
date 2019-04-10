@@ -24,8 +24,6 @@ with open('Inputs.txt') as I:
         line[i] = line[i].replace("[", "")
         line[i] = line[i].replace("]", "")
         Input.append(np.fromstring(line[i], dtype=float, sep = ','))
-    inputLine = Input[1]
-    print(inputLine[0])
     I.close()
 
 with open('Outputs.txt') as O:
@@ -38,7 +36,7 @@ with open('Outputs.txt') as O:
 
 
 class flockNN:
-    def __init__ (self, lr = 0.0025, filename = "Inputs.txt"):
+    def __init__ (self, lr = 0.1, filename = "./NeuralNet2.tflearn"):
         self.lr = lr
         self.train_Inputs = Input
         self.test_Inputs = Input
@@ -63,20 +61,18 @@ class flockNN:
 
     def model(self):
         network = input_data(shape=[None, 5, 1], name='input')
-        network = fully_connected(network, 50, activation='relu')
-        network = fully_connected(network, 10, activation='relu', restore='False')
+        network = fully_connected(network, 25, activation='relu')
         network = fully_connected(network, 1, activation='linear')
-        network = regression(network, optimizer='Adam', learning_rate=self.lr, loss='mean_square', name='target')
+        sgd = tflearn.optimizers.SGD(learning_rate=self.lr, lr_decay=0.096, decay_step=1000, staircase=False, use_locking=False, name='SGD')
+        network = regression(network, optimizer=sgd, learning_rate=self.lr, loss='mean_square', name='target')
         model = tflearn.DNN(network, tensorboard_dir='log')
-        #model.load('./NeuralNet2.tflearn')
+        model.load('./NeuralNet2.tflearn')
         return model
 
     def train_model(self, training_Inputs, training_Outputs, model):
         X = np.array([i for i in training_Inputs]).reshape(-1,5,1)#input
-        print(X)
         Y = np.array([i for i in training_Outputs]).reshape(-1,1)#output
-        print(Y)
-        model.fit(X, Y, n_epoch = 100, shuffle=True, run_id = './NeuralNet2.tflearn')##input data fed to train
+        model.fit(X, Y, n_epoch = 5, shuffle=True, run_id = './NeuralNet2.tflearn')##input data fed to train
         model.save('./NeuralNet2.tflearn')
         return model
 
@@ -87,6 +83,15 @@ class flockNN:
         print('Test accuarcy: ', test_acc)
         prediction = NN_Model.predict(np.array([i for i in training_Inputs]).reshape(-1,5,1))
         print("Prediciton: %s" % str(prediction[10]))
+
+    def test_Boid(self, NN_Model,Boid_testing):
+        BoidInput = []
+        Boid_testing = Boid_testing.replace("[", "")
+        Boid_testing = Boid_testing.replace("]", "")
+        BoidInput = (np.fromstring(Boid_testing, dtype=float, sep = ','))
+        X = np.array([j for j in BoidInput]).reshape(1,5,1)
+        BoidPrediction = NN_Model.predict(X)
+        return BoidPrediction
 
     def train(self):
         training_Inputs = self.train_Inputs

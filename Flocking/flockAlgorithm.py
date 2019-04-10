@@ -2,8 +2,11 @@ import random
 from math import sqrt, floor, atan2, pi, cos, sin
 import pickle
 import pygame
+from flockingNN import flockNN
+import numpy as np
 pygame.init()
 
+neuralNet = flockNN()
 m_Radius = 20
 
 white = (255,255,255)
@@ -11,12 +14,12 @@ black = (0,0,0)
 red = (255,0,0)
 green = (0,255,0)
 blue = (0,0,255)
-flockSize = 8
+flockSize = 12
 
 nearestRotation = [0.0, 0.0 ,0.0 ,0.0, 0.0]
 
-display_Width = 400
-display_Height = 400
+display_Width = 700
+display_Height = 700
 
 gameDisplay = pygame.display.set_mode((display_Width,display_Height))
 pygame.display.set_caption("Flocking Window")
@@ -209,6 +212,35 @@ class Bird:
 
         self.outputRotation = self.rotation
 
+    def NeuralNetFlocking(self, flockList):
+        closeEnough = 30
+        extendedDist = 100
+
+        nnRotation = [0.0,0.0,0.0,0.0,0.0]
+
+        nnRotation[0] = self.rotation
+        j=1
+
+        for i in range(len(flockList)):
+            distance = sqrt(((self.location[0]-flockList[i].location[0])**2)+((self.location[1] - flockList[i].location[1])**2))
+            
+            if(j == 5):
+                break
+
+            if(distance <= closeEnough and distance != 0):
+                nnRotation[j] = flockList[i].rotation
+                
+                j+=1
+            elif(distance <= extendedDist and distance != 0):
+                nnRotation[j] = flockList[i].rotation
+                j+=1
+            else:
+                nnRotation[j] = self.rotation
+                j+=1
+        
+        nn_model = neuralNet.model()
+        self.outputRotation = neuralNet.test_Boid(nn_model, str(nnRotation))
+
     def update(self):
         self.velocity = [self.heading[0] * self.speed[0], self.heading[1] *self.speed[1]]##addVector
         self.location = [self.location[0] + self.velocity[0], self.location[1] + self.velocity[1]]
@@ -253,7 +285,7 @@ def writeToFile(output, input=[]):
     file = open(filename, "a")
     inputs = str( input)+'\n'
     file.write(inputs)
-    
+
     filename = 'Outputs.txt'
     file = open(filename, 'a')
     Outputs = str(output)+'\n'
@@ -263,6 +295,7 @@ def writeToFile(output, input=[]):
 ##game loop 
 def main():
     flocking = True
+    neuralFlock= False
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -273,24 +306,36 @@ def main():
                     flocking = False
                 else:
                     flocking = True
+                if event.key == pygame.K_a and flocking == True and neuralFlock == False:
+                    neuralFlock = True
+                    flocking = False
+                else:
+                    neuralFlock = False
+                    flocking = False
 
         gameDisplay.fill(black)
         if len(Bird.flock) < flockSize:
                 Bird()
         else:
              for i in range(len(Bird.flock)):
-                if flocking == False:
+                if flocking == False and neuralFlock == False:
                     Bird.moveBird(Bird.flock[i])
                     Bird.borders(Bird.flock[i])
-                elif flocking == True:
+                elif flocking == True and neuralFlock == False:
                     for i in range(len(Bird.flock)):
                         Bird.Flocking(Bird.flock[i], Bird.flock)
                         Bird.borders(Bird.flock[i])
                         Bird.calcHeading(Bird.flock[i], Bird.flock)
                         Bird.update(Bird.flock[i])
-                        writeToFile(Bird.flock[i].outputRotation,nearestRotation)
+                        #writeToFile(Bird.flock[i].outputRotation,nearestRotation)
                         if i >= len(Bird.flock):
                             i = 0
+                elif neuralFlock == True:
+                    for i in range(len(Bird.flock)):
+                        Bird.NeuralNetFlocking(Bird.flock[i], Bird.flock)
+                        Bird.update(Bird.flock[i])
+                        if i >= len(Bird.flock):
+                            i =0
         
         pygame.display.update()
         
