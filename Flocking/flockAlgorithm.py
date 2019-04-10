@@ -238,8 +238,8 @@ class Bird:
                 nnRotation[j] = self.rotation
                 j+=1
         
-        nn_model = neuralNet.model()
-        self.outputRotation = neuralNet.test_Boid(nn_model, str(nnRotation))
+        
+        self.outputRotation = neuralNet.test()
 
     def update(self):
         self.velocity = [self.heading[0] * self.speed[0], self.heading[1] *self.speed[1]]##addVector

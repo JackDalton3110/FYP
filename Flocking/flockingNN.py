@@ -17,6 +17,7 @@ Input = []
 Output = []
 print("tf version = "+tf.__version__)
 
+
 with open('Inputs.txt') as I:
     line = I.readlines()
     for i in range(len(line)):
@@ -66,7 +67,7 @@ class flockNN:
         sgd = tflearn.optimizers.SGD(learning_rate=self.lr, lr_decay=0.096, decay_step=1000, staircase=False, use_locking=False, name='SGD')
         network = regression(network, optimizer=sgd, learning_rate=self.lr, loss='mean_square', name='target')
         model = tflearn.DNN(network, tensorboard_dir='log')
-        model.load('./NeuralNet2.tflearn')
+        #model.load('./NeuralNet2.tflearn')
         return model
 
     def train_model(self, training_Inputs, training_Outputs, model):
@@ -82,15 +83,17 @@ class flockNN:
         test_acc = NN_Model.evaluate(inputs, outputs)
         print('Test accuarcy: ', test_acc)
         prediction = NN_Model.predict(np.array([i for i in training_Inputs]).reshape(-1,5,1))
-        print("Prediciton: %s" % str(prediction[10]))
+        print("Prediciton: "+ str(prediction[10]+', '+ prediction[1]+', '+ prediction[8000]+', '+prediction[10000]))
+        print("Expected: "+ str(training_Outputs[10]+', '+ training_Outputs[1]+', '+ training_Outputs[8000]+', '+training_Outputs[10000]))
+        return prediction
 
-    def test_Boid(self, NN_Model,Boid_testing):
+    def test_Boid(self,Boid_testing):
+        BoidModel = self.model()
         BoidInput = []
         Boid_testing = Boid_testing.replace("[", "")
         Boid_testing = Boid_testing.replace("]", "")
         BoidInput = (np.fromstring(Boid_testing, dtype=float, sep = ','))
-        X = np.array([j for j in BoidInput]).reshape(1,5,1)
-        BoidPrediction = NN_Model.predict(X)
+        BoidPrediction = BoidModel.predict(np.array([i for i in BoidInput]).reshape(-1,5,1))
         return BoidPrediction
 
     def train(self):
@@ -101,12 +104,15 @@ class flockNN:
         self.test_model(training_Inputs, training_Outputs, nn_model)
 
     def visualise(self):
-        nn_model = self.model()
+        BoidModel = self.model()
         self.visualise_game(nn_model)
 
     def test(self):
         nn_model = self.model()
-        self.test_model(self.test_Inputs, self.test_Inputs, nn_model)
+        training_Inputs = self.train_Inputs
+        training_Outputs = self.train_Outputs
+        birdRot = self.test_model(training_Inputs, training_Outputs, nn_model)
+        return birdRot
 
 flockNN().train()
     #flockNN().visualise()
