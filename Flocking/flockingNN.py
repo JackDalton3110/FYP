@@ -83,6 +83,10 @@ class flockNN:
         test_acc = NN_Model.evaluate(inputs, outputs)
         print('Test accuarcy: ', test_acc)
         prediction = NN_Model.predict(np.array([i for i in training_Inputs]).reshape(-1,5,1))
+        filename = 'Predictions.txt'
+        file = open(filename, "a")
+        inputs = str(prediction)+'\n'
+        file.write(inputs)
         print("Prediciton: "+ str(prediction[10]+', '+ prediction[1]+', '+ prediction[8000]+', '+prediction[10000]))
         print("Expected: "+ str(training_Outputs[10]+', '+ training_Outputs[1]+', '+ training_Outputs[8000]+', '+training_Outputs[10000]))
         return prediction
