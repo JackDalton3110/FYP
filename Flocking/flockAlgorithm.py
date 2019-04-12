@@ -6,20 +6,19 @@ from flockingNN import flockNN
 import numpy as np
 pygame.init()
 
-neuralNet = flockNN()
-m_Radius = 20
+#neuralNet = flockNN()
 
 white = (255,255,255)
 black = (0,0,0)
 red = (255,0,0)
 green = (0,255,0)
 blue = (0,0,255)
-flockSize = 12
+flockSize = 15
 
 nearestRotation = [0.0, 0.0 ,0.0 ,0.0, 0.0]
 
-display_Width = 700
-display_Height = 700
+display_Width = 1200
+display_Height = 600
 
 gameDisplay = pygame.display.set_mode((display_Width,display_Height))
 pygame.display.set_caption("Flocking Window")
@@ -27,12 +26,13 @@ gameDisplay.fill(black)
 clock = pygame.time.Clock()
 
 ##Flock members
-class Bird:
+class Boid:
 
     flock = []
 
+    ##Constructor Function
     def __init__(self, gui = False):
-        posX = float(random.randrange(display_Width))
+        posX = float(random.randrange(display_Width))##randomise position for every Bird
         posY = float(random.randrange(display_Height))
         self.location = [posX, posY]
         self.seperation = 0.0
@@ -49,14 +49,11 @@ class Bird:
         self.maxForce = 0.5 ## steering force
         self.img = pygame.image.load('./Flocking/images/flockImg.png')
         self.outputRotation = 0.0
-        Bird.flock.append(self)
-        
+        Boid.flock.append(self)
 
-    def start(self):
-        return self.generate_observations()
-
+    ##Moves Boids randomly and randomises their rotation
     def moveBird(self):
-        if self.forceX == 0.0 and self.forceY == 0.0:
+        if self.forceX == 0.0 and self.forceY == 0.0:#randomise movement
             self.forceX = random.randrange(2.0)
             self.forceY = random.randrange(2.0)
             self.velocity = [self.forceX, self.forceY]
@@ -64,12 +61,15 @@ class Bird:
         self.location[1] += self.forceY
         self.location = [self.location[0], self.location[1]]
         gameDisplay.blit(self.img, (self.location[0],self.location[1]))
-        self.rotation = float(random.randrange(360))
-        pygame.display.set_caption("Bird Moving Window")
+        self.rotation = float(random.randrange(360))#randomises rotation
+        pygame.display.set_caption("Bird Moving Window")#changes title of screen
 
+    ##Takes force argument and applies that to Boids
     def ApplyForce(self, force=[]):
         self.acceleration = [self.acceleration[0]+force[0], self.acceleration[1]+force[1]]
 
+
+     ##Calculate Seperation and return to Boid
     def calcSeperation(self, flockList):
         sepDist = 100.0
         steer = [0.0,0.0]
@@ -109,7 +109,8 @@ class Bird:
             if steerMag > self.maxForce:##limit
                steer = [steer[0]/steerMag, steer[1]/steerMag]
         return steer
-
+    
+    ##Calculate Alignment and return to Boid
     def calcAlignment(self, flockList):
         neighborDist = 10.0
         m_sum = [0.0,0.0]
@@ -143,6 +144,7 @@ class Bird:
             temp = [0.0,0.0]
             return temp
 
+    ##Calculate cohesion and return value
     def calcCohesion(self, flockList):
         neighborDist = 20.0
         m_sum = [0.0,0.0]
@@ -157,13 +159,12 @@ class Bird:
 
         if count > 0:
             m_sum = [m_sum[0] / count , m_sum[1] / count]
-            return Bird.seek(self, m_sum)
+            return Boid.seek(self, m_sum)
         else:
             temp = [0.0,0.0]
             return temp
 
-    
-
+    #seek meethod to move closer to other Boids
     def seek(self, m_sum, *args):
         desired = self.location
         desired = [desired[0] - m_sum[0], desired[1] - m_sum[1]]
@@ -180,7 +181,10 @@ class Bird:
         if accelMag > self.maxSpeed:
             self.acceleration = [self.acceleration[0]/self.maxForce, self.acceleration[1]/self.maxForce]
         return self.acceleration
+    
 
+    ## Calculates average rotation based on nearest 5 rotations
+    ## Uses new rotation to calculate heading and applies heading to the Boid
     def calcHeading(self, flockList):
         closeEnough = 30
         extendedDist = 100
@@ -196,29 +200,30 @@ class Bird:
             if(j == 5):
                 break
 
-            if(distance <= closeEnough and distance != 0):
+            if(distance <= closeEnough and distance != 0):#if within distance add rotation to list
                 nearestRotation[j]= flockList[i].rotation
                 j+=1
             elif(distance <= extendedDist and distance != 0):
                 nearestRotation[j] = flockList[i].rotation
                 j+=1
             else:
-                nearestRotation[j] = self.rotation
+                nearestRotation[j] = self.rotation#else add own rotation
                 j+=1
         
-        self.rotation = round(sum(nearestRotation)/len(nearestRotation),2)
+        self.rotation = round(sum(nearestRotation)/len(nearestRotation),2)#calculate x and y heading
         self.heading[0] = cos(self.rotation * (3.14/180))
         self.heading[1] = sin(self.rotation * (3.14/180))
 
-        self.outputRotation = self.rotation
+        #self.outputRotation = self.rotation # save rotation 
 
+    ##Predict new rotation after feeding the closest 5 rotation to the ANN
     def NeuralNetFlocking(self, flockList):
         closeEnough = 30
         extendedDist = 100
+        neuralNet = flockNN().model()
+        nnRotation = []
 
-        nnRotation = [0.0,0.0,0.0,0.0,0.0]
-
-        nnRotation[0] = self.rotation
+        nnRotation.append(self.rotation)
         j=1
 
         for i in range(len(flockList)):
@@ -228,25 +233,33 @@ class Bird:
                 break
 
             if(distance <= closeEnough and distance != 0):
-                nnRotation[j] = flockList[i].rotation
+                nnRotation.append(flockList[i].rotation)
                 
                 j+=1
             elif(distance <= extendedDist and distance != 0):
-                nnRotation[j] = flockList[i].rotation
+                nnRotation.append(flockList[i].rotation)
                 j+=1
             else:
-                nnRotation[j] = self.rotation
+                nnRotation.append(self.rotation)
                 j+=1
         
-        
-        self.outputRotation = neuralNet.test()
+        #testPredict = NN_Model.predict(np.array([training_Inputs[8000]]).reshape(-1,5,1))
+        X = np.array(nnRotation)
+        print(X)
+        InputArr = np.array([i for i in X]).reshape(-1,5,1)
+        print(InputArr)
+        self.rotation =  neuralNet.predict(InputArr)
+        self.heading[0] = cos(self.rotation * (3.14/180))
+        self.heading[1] = sin(self.rotation * (3.14/180))
 
+
+    ##update method
     def update(self):
         self.velocity = [self.heading[0] * self.speed[0], self.heading[1] *self.speed[1]]##addVector
         self.location = [self.location[0] + self.velocity[0], self.location[1] + self.velocity[1]]
-        Bird.render(self)
+        Boid.render(self)
 
-
+    ##Makes the game enviroment a wrap around
     def borders(self):
         if(self.location[0] > display_Width):
             self.location[0] = 0
@@ -258,11 +271,12 @@ class Bird:
         elif(self.location[1] > display_Height):
             self.location[1] = 0
 
+    ##Calculates the seperation, cohesion and alignment then applies force to Boid
     def Flocking(self, flockList):
 
-        sep = Bird.calcSeperation(self, flockList)
-        align = Bird.calcAlignment(self, flockList)
-        coh = Bird.calcCohesion(self, flockList)
+        sep = Boid.calcSeperation(self, flockList)
+        align = Boid.calcAlignment(self, flockList)
+        coh = Boid.calcCohesion(self, flockList)
 
         sep = [sep[0]*1.5, sep[1]*1.5]
         align = [align[0]*1 ,align[1]*1 ]
@@ -273,13 +287,14 @@ class Bird:
         self.ApplyForce(coh)
         pygame.display.set_caption("Flocking Window")
 
+    #Draws Boids
     def render(self):
         gameDisplay.blit(self.img, (self.location[0],self.location[1]))
 
-    def generate_observations(self):
-        return self.alignment, self.cohesion, self.seperation
 
-
+##Used to record training data
+##Records closest 5 rotations to one file (Inputs)
+##Records rotation after calculating the average (Output)
 def writeToFile(output, input=[]):
     filename = 'Inputs.txt'
     file = open(filename, "a")
@@ -314,27 +329,27 @@ def main():
                     flocking = False
 
         gameDisplay.fill(black)
-        if len(Bird.flock) < flockSize:
-                Bird()
+        if len(Boid.flock) < flockSize:
+                Boid() ##Fill flock with Boid objects
         else:
-             for i in range(len(Bird.flock)):
+             for i in range(len(Boid.flock)):
                 if flocking == False and neuralFlock == False:
-                    Bird.moveBird(Bird.flock[i])
-                    Bird.borders(Bird.flock[i])
+                    Boid.moveBird(Boid.flock[i])
+                    Boid.borders(Boid.flock[i])
                 elif flocking == True and neuralFlock == False:
-                    for i in range(len(Bird.flock)):
-                        Bird.Flocking(Bird.flock[i], Bird.flock)
-                        Bird.borders(Bird.flock[i])
-                        Bird.calcHeading(Bird.flock[i], Bird.flock)
-                        Bird.update(Bird.flock[i])
+                    for i in range(len(Boid.flock)):
+                        Boid.Flocking(Boid.flock[i], Boid.flock)
+                        Boid.borders(Boid.flock[i])
+                        Boid.calcHeading(Boid.flock[i], Boid.flock)
+                        Boid.update(Boid.flock[i])
                         #writeToFile(Bird.flock[i].outputRotation,nearestRotation)
-                        if i >= len(Bird.flock):
+                        if i >= len(Boid.flock):
                             i = 0
                 elif neuralFlock == True:
-                    for i in range(len(Bird.flock)):
-                        Bird.NeuralNetFlocking(Bird.flock[i], Bird.flock)
-                        Bird.update(Bird.flock[i])
-                        if i >= len(Bird.flock):
+                    for i in range(len(Boid.flock)):
+                        Boid.NeuralNetFlocking(Boid.flock[i], Boid.flock)
+                        Boid.update(Boid.flock[i])
+                        if i >= len(Boid.flock):
                             i =0
         
         pygame.display.update()
