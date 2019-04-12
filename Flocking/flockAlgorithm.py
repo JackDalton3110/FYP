@@ -5,8 +5,6 @@ import pygame
 import numpy as np
 pygame.init()
 
-#neuralNet = flockNN()
-
 white = (255,255,255)
 black = (0,0,0)
 red = (255,0,0)
@@ -30,7 +28,7 @@ class Boid:
     flock = []
 
     ##Constructor Function
-    def __init__(self, gui = False):
+    def __init__(self):
         posX = float(random.randrange(display_Width))##randomise position for every Bird
         posY = float(random.randrange(display_Height))
         self.location = [posX, posY]
@@ -314,7 +312,6 @@ def writeToFile(output, input=[]):
 ##game loop 
 def main():
     flocking = True
-    neuralFlock= False
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -325,36 +322,25 @@ def main():
                     flocking = False
                 else:
                     flocking = True
-                if event.key == pygame.K_a and flocking == True and neuralFlock == False:
-                    neuralFlock = True
-                    flocking = False
-                else:
-                    neuralFlock = False
-                    flocking = False
 
         gameDisplay.fill(black)
         if len(Boid.flock) < flockSize:
                 Boid() ##Fill flock with Boid objects
         else:
              for i in range(len(Boid.flock)):
-                if flocking == False and neuralFlock == False:
+                if flocking == False:
                     Boid.moveBird(Boid.flock[i])
                     Boid.borders(Boid.flock[i])
-                elif flocking == True and neuralFlock == False:
+                elif flocking == True:
                     for i in range(len(Boid.flock)):
                         Boid.Flocking(Boid.flock[i], Boid.flock)
                         Boid.borders(Boid.flock[i])
                         Boid.calcHeading(Boid.flock[i], Boid.flock)
                         Boid.update(Boid.flock[i])
+                        
                         #writeToFile(Bird.flock[i].outputRotation,nearestRotation)
                         if i >= len(Boid.flock):
                             i = 0
-                elif neuralFlock == True:
-                    for i in range(len(Boid.flock)):
-                        Boid.NeuralNetFlocking(Boid.flock[i], Boid.flock)
-                        Boid.update(Boid.flock[i])
-                        if i >= len(Boid.flock):
-                            i =0
         
         pygame.display.update()
         
