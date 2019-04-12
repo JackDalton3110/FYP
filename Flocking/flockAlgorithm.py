@@ -2,7 +2,6 @@ import random
 from math import sqrt, floor, atan2, pi, cos, sin
 import pickle
 import pygame
-from flockingNN import flockNN
 import numpy as np
 pygame.init()
 
@@ -220,7 +219,6 @@ class Boid:
     def NeuralNetFlocking(self, flockList):
         closeEnough = 30
         extendedDist = 100
-        neuralNet = flockNN().model()
         nnRotation = []
 
         nnRotation.append(self.rotation)
@@ -254,9 +252,9 @@ class Boid:
         print(InputArr)
         rotations = np.array([i for i in InputArr]).reshape(-1,5,1)
 
-        self.rotation =  neuralNet.predict(rotations)
-        self.heading[0] = cos(self.rotation * (3.14/180))
-        self.heading[1] = sin(self.rotation * (3.14/180))
+        
+
+        return rotations
 
 
     ##update method

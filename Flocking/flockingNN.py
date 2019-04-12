@@ -1,8 +1,3 @@
-
-
-import tensorflow as tf
-from tensorflow import keras
-from tensorflow.keras import layers
 import tflearn
 from tflearn.layers.core import input_data, fully_connected
 from tflearn.layers.estimator import regression
@@ -14,10 +9,11 @@ from random import randint
 from statistics import mean
 from collections import Counter
 
+from flockAlgorithm import Boid
+
 ##Create lists for inputs and outputs of training data
 Input = []
 Output = []
-print("tf version = "+tf.__version__)
 
 ##Converts string to float and appends to Input list
 with open('Inputs.txt') as I: ##create inputs from file
@@ -82,7 +78,7 @@ class flockNN:
         return prediction
 
     ##Calculate Prediction based on information fed into NN from Boid
-    def test_Boid(self,Boid_testing):
+    def test_Boid(self,Boid_testing=[]):
         Boid_Model = self.model()
         BoidInput = []
         Boid_testing = Boid_testing.replace("[", "")
@@ -92,6 +88,8 @@ class flockNN:
         print(X)
         BoidPrediction = Boid_Model.predict(X).reshape(-1,5,1)
         
+
+
         return BoidPrediction
 
 
@@ -124,8 +122,12 @@ class flockNN:
                     Boid()
             else:
                  for i in range(len(Boid.flock)):
-                        Boid.NeuralNetFlocking(Boid.flock[i], Boid.flock)
+                        information = Boid.NeuralNetFlocking(Boid.flock[i], Boid.flock)
+                        Boid[i].rotation = flockNN.test_Boid(information)
+                        Boid[i].heading[0] = cos(Boid[i].rotation * (3.14/180))
+                        Boid[i].heading[1] = sin(Boid[i].rotation * (3.14/180))
                         Boid.update(Boid.flock[i])
+
                         if i >= len(Boid.flock):
                             i =0
             pygame.display.update()
