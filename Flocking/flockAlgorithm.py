@@ -243,12 +243,18 @@ class Boid:
                 nnRotation.append(self.rotation)
                 j+=1
         
-        #testPredict = NN_Model.predict(np.array([training_Inputs[8000]]).reshape(-1,5,1))
-        X = np.array(nnRotation)
-        print(X)
-        InputArr = np.array([i for i in X]).reshape(-1,5,1)
+       
+        InputArr = []
+        X = str(nnRotation)
+        X = X.rstrip()#strip whitespace
+        X = X.replace("[", "")#remove square brakets
+        X= X.replace("]", "")
+
+        InputArr.append(np.fromstring(X, dtype=float, sep = ','))#append to list
         print(InputArr)
-        self.rotation =  neuralNet.predict(InputArr)
+        rotations = np.array([i for i in InputArr]).reshape(-1,5,1)
+
+        self.rotation =  neuralNet.predict(rotations)
         self.heading[0] = cos(self.rotation * (3.14/180))
         self.heading[1] = sin(self.rotation * (3.14/180))
 
